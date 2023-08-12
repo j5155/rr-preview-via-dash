@@ -1,0 +1,26 @@
+plugins {
+    id 'java'
+}
+
+group 'com.github.j5155'
+version '1.0-SNAPSHOT'
+
+repositories {
+    mavenCentral()
+    maven {
+        url = 'https://maven.brott.dev/'
+    }
+}
+
+dependencies {
+    implementation 'com.google.code.gson:gson:2.10.1'
+
+
+    implementation "org.nanohttpd:nanohttpd-websocket:2.3.1"
+    implementation "com.acmerobotics.roadrunner:core:1.0.0-beta2"
+    implementation "com.acmerobotics.roadrunner:actions:1.0.0-beta2"
+    implementation("com.acmerobotics.dashboard:core:0.4.9") {
+        exclude group: 'org.firstinspires.ftc'
+    }
+
+}
