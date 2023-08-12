@@ -18,7 +18,7 @@ import fi.iki.elonen.NanoWSD;
 
 public class TestDashboardInstance {
     private static final TestDashboardInstance instance = new TestDashboardInstance();
-    DashboardCore core = new DashboardCore();
+    public DashboardCore core = new DashboardCore();
     private final NanoWSD server = new NanoWSD(8000) {
         @Override
         protected NanoWSD.WebSocket openWebSocket(NanoHTTPD.IHTTPSession handshake) {
