@@ -8,7 +8,7 @@ import com.acmerobotics.roadrunner.Action;
 import com.acmerobotics.roadrunner.Pose2d;
 import com.acmerobotics.roadrunner.Vector2d;
 
-public class OpMode {
+public class ExampleOpMode {
     // drive model parameters
     public static double IN_PER_TICK = 0.000549539;
     public static double LATERAL_IN_PER_TICK = 1;
