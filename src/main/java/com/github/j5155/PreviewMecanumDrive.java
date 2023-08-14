@@ -4,20 +4,9 @@ package com.github.j5155;
 
 import com.acmerobotics.dashboard.canvas.Canvas;
 import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
-import com.acmerobotics.roadrunner.AccelConstraint;
-import com.acmerobotics.roadrunner.Action;
-import com.acmerobotics.roadrunner.AngularVelConstraint;
-import com.acmerobotics.roadrunner.MecanumKinematics;
-import com.acmerobotics.roadrunner.MinVelConstraint;
-import com.acmerobotics.roadrunner.Pose2d;
-import com.acmerobotics.roadrunner.ProfileAccelConstraint;
-import com.acmerobotics.roadrunner.TimeTrajectory;
-import com.acmerobotics.roadrunner.TimeTurn;
-import com.acmerobotics.roadrunner.TrajectoryActionBuilder;
-import com.acmerobotics.roadrunner.TurnConstraints;
-import com.acmerobotics.roadrunner.Vector2d;
-import com.acmerobotics.roadrunner.VelConstraint;
+import com.acmerobotics.roadrunner.*;
 
+import java.lang.Math;
 import java.util.Arrays;
 import java.util.List;
 
@@ -48,24 +37,30 @@ public final class PreviewMecanumDrive {
         this.MAX_PROFILE_ACCEL = MAX_PROFILE_ACCEL;
         this.MAX_ANG_VEL = MAX_ANG_VEL;
         this.MAX_ANG_ACCEL = MAX_ANG_ACCEL;
+        kinematics = new MecanumKinematics(
+                IN_PER_TICK * TRACK_WIDTH_TICKS, LATERAL_MULTIPLIER);
+        defaultTurnConstraints = new TurnConstraints(
+                MAX_ANG_VEL, -MAX_ANG_ACCEL, MAX_ANG_ACCEL);
+        defaultVelConstraint =
+        new MinVelConstraint(Arrays.asList(
+                kinematics.new WheelVelConstraint(MAX_WHEEL_VEL),
+                new AngularVelConstraint(MAX_ANG_VEL)
+        ));
+        defaultAccelConstraint =
+                new ProfileAccelConstraint(MIN_PROFILE_ACCEL, MAX_PROFILE_ACCEL);
+
     }
 
 
-    public final MecanumKinematics kinematics = new MecanumKinematics(
-            IN_PER_TICK * TRACK_WIDTH_TICKS, LATERAL_MULTIPLIER);
+    public MecanumKinematics kinematics;
 
-    public final TurnConstraints defaultTurnConstraints = new TurnConstraints(
-            MAX_ANG_VEL, -MAX_ANG_ACCEL, MAX_ANG_ACCEL);
-    public final VelConstraint defaultVelConstraint =
-            new MinVelConstraint(Arrays.asList(
-                    kinematics.new WheelVelConstraint(MAX_WHEEL_VEL),
-                    new AngularVelConstraint(MAX_ANG_VEL)
-            ));
-    public final AccelConstraint defaultAccelConstraint =
-            new ProfileAccelConstraint(MIN_PROFILE_ACCEL, MAX_PROFILE_ACCEL);
+    public TurnConstraints defaultTurnConstraints;
+    public VelConstraint defaultVelConstraint;
+    public final AccelConstraint defaultAccelConstraint;
     public static final class FollowTrajectoryAction implements Action {
         public final TimeTrajectory timeTrajectory;
         private final double[] xPoints, yPoints;
+        private double beginTs = -1;
         public FollowTrajectoryAction(TimeTrajectory t) {
             timeTrajectory = t;
 
@@ -82,6 +77,39 @@ public final class PreviewMecanumDrive {
         }
         @Override
         public boolean run(TelemetryPacket p) {
+            double t;
+
+            if (beginTs < 0) {
+                beginTs = Actions.now();
+                t = 0;
+            } else {
+                t = Actions.now() - beginTs;
+            }
+
+            if (t >= timeTrajectory.duration) {
+                return false;
+            }
+
+            Pose2dDual<Time> txWorldTarget = timeTrajectory.get(t);
+
+            p.put("x", txWorldTarget.position.x);
+            p.put("y", txWorldTarget.position.y);
+            p.put("heading (deg)", Math.toDegrees(txWorldTarget.heading.real.get(0)));
+
+
+
+            // only draw when active; only one drive action should be active at a time
+            Canvas c = p.fieldOverlay();
+
+            c.setStroke("#4CAF50");
+            drawRobot(c, txWorldTarget.value());
+
+
+
+            c.setStroke("#4CAF50FF");
+            c.setStrokeWidth(1);
+            c.strokePolyline(xPoints, yPoints);
+
             return true;
         }
 
@@ -94,12 +122,39 @@ public final class PreviewMecanumDrive {
     }
     public static final class TurnAction implements Action {
         private final TimeTurn turn;
+        private double beginTs = -1;
         public TurnAction(TimeTurn turn) {
             this.turn = turn;
         }
 
         @Override
         public boolean run(TelemetryPacket p) {
+            double t;
+            if (beginTs < 0) {
+                beginTs = Actions.now();
+                t = 0;
+            } else {
+                t = Actions.now() - beginTs;
+            }
+
+            if (t >= turn.duration) {
+
+                return false;
+            }
+
+            Pose2dDual<Time> txWorldTarget = turn.get(t);
+
+
+            Canvas c = p.fieldOverlay();
+
+
+            c.setStroke("#4CAF50");
+            drawRobot(c, txWorldTarget.value());
+
+
+            c.setStroke("#7C4DFFFF");
+            c.fillCircle(turn.beginPose.position.x, turn.beginPose.position.y, 2);
+
             return true;
         }
         @Override

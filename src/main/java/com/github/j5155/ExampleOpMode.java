@@ -6,6 +6,7 @@ import com.acmerobotics.dashboard.canvas.Canvas;
 import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
 import com.acmerobotics.roadrunner.Action;
 import com.acmerobotics.roadrunner.Pose2d;
+import com.acmerobotics.roadrunner.TrajectoryActionBuilder;
 import com.acmerobotics.roadrunner.Vector2d;
 
 public class ExampleOpMode {
@@ -33,19 +34,19 @@ public class ExampleOpMode {
                 MAX_WHEEL_VEL, MIN_PROFILE_ACCEL, MAX_PROFILE_ACCEL, MAX_ANG_VEL, MAX_ANG_ACCEL);
 
         Pose2d startPose = new Pose2d(0,0,0);
-        Action traj =
+        TrajectoryActionBuilder trajBuild =
                 drive.actionBuilder(startPose)
                         .splineTo(new Vector2d(0, 30), Math.PI / 2)
                         .splineTo(new Vector2d(0, 60), Math.PI)
-                        .strafeTo(new Vector2d(48,48))
-                        .build();
+                        .strafeTo(new Vector2d(48,48));
 
-
+        Action traj = trajBuild.build();
         traj.preview(c);
         PreviewMecanumDrive.drawRobot(c, startPose);
 
         while(true) {
             TelemetryPacket p = new TelemetryPacket();
+            if (!traj.run(p)) traj = trajBuild.build();
             p.fieldOverlay().getOperations().addAll(c.getOperations());
             dash.core.sendTelemetryPacket(p);
         }
