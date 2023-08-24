@@ -29,6 +29,7 @@ If you already have an existing Android Studio project, you can add this to it b
 
 5.  Open up the `build.gradle` file for the RRPreview module (or whatever you chose to name it prior). In this file, change all instances `JavaVersion.VERSION_1_7` to `JavaVersion.VERSION_17`
     <img src="/images/readme/installationStep5.png" width="566" height="274"/>
+NOTE: This image shows MeepMeepTesting (original source of these instructions), you want RRPreview
 
 6.  At the bottom of the file add the following gradle snippet:
 
